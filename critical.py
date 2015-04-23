@@ -129,7 +129,7 @@ def main():
         for i in all_paths:
             print( '==>'.join(str(a.id) for a in i))
         
-        print('The critical path is {}'.format(max(all_paths, key=sum(all_paths.duration))))
+        #print('The critical path is {}'.format(max(all_paths, key=sum(all_paths.duration))))
     
         
     
