@@ -1,11 +1,3 @@
-'''
-Created on Apr 2, 2015
-
-@author: danidee
-'''
-
-from copy import deepcopy
-
 class criticalPath:
     
     def __init__(self):
@@ -13,59 +5,63 @@ class criticalPath:
         Initialize all the variables we're going to use to calculate the critical path
         '''
         self.id = None
-        self.pred = tuple()
-        self.dur = None
+        self.predecessor = tuple()
+        self.duration = None
         self.est = None
         self.lst = None
         #list to store all the objects
         self.all_objects = list()
         
-    def create_objects(self):
+    def __lt__(self, other):
+        return other.id > self.id
+
+    def __gt__(self, other):
+        return self.id > other.id
         
-        return criticalPath()
-    
+        
     def get_properties(self):
         ''' 
         This functions gets all the input from the user and stores the
-        activity name a string, the predecessor in a tuple and the duration
-        in a string
+        activity name as a string, the predecessor as a tuple and the duration
+        as an integer
         '''
-        r = criticalPath()
-        Object_list = list()
+        
+        
+        object_list = list()
         num_act = int(input('How many activities are in the project:\n'))
         for i in range(num_act):
             name = input('what is the name of the activity {}:\n'.format(i+1))
-            activity_object = r.create_objects()
-            pred = input('what is the predecessor(s) of the activity:\n')
-            pred = tuple(pred.replace(',', ''))
-            dur = input('what is the duration of the activity:\n')
+            activity = criticalPath()
+            predecessor = input('what is the predecessor(s) of the activity:\n')
+            predecessor = tuple(predecessor.replace(',', ''))
+            duration = int(input('what is the duration of the activity:\n'))
             
-            #sets the properties of the objects from what was gotten from the user
-            activity_object.set_properties(name, pred, dur)
-            #****
-            Object_list.append(activity_object)
+            '''sets the properties of the objects from what was gotten from the user'''
+            activity.set_properties(name, predecessor, duration)
             
-            self.all_objects.append(activity_object)
+            object_list.append(activity)
+            
+            self.all_objects.append(activity)
             
             
         
-        return Object_list
+        return object_list
     
     def set_properties(self, name, predecessor, duration):
         self.id = name
-        self.pred = predecessor
-        self.dur = duration
+        self.predecessor = predecessor
+        self.duration = duration
         
         
-    def get_nodes(self):
+    def get_starting_nodes(self):
         '''
-        Iterate through the objects, get the activities without predecessors and returns
-        a list of them
+        gets the starting nodes/activities and puts them individually into a nested list
         '''
+        
         list_node = list()
         ls = self.get_properties()
         for i in ls:
-            for a in i.pred:
+            for a in i.predecessor:
                 if '0' in a:
                     myls = list()
                     myls.append(i)
@@ -73,28 +69,67 @@ class criticalPath:
         
         return list_node
     
-    #returns a list of all activity objects
-    def get_obj(self):
+    '''returns a list of all activity objects'''
+    def get_all_nodes(self):
         
         return self.all_objects
 
 
 def main():
     activity = criticalPath()
-    all_objects = activity.get_obj()
-    starting_nodes = activity.get_nodes()
+    starting_nodes = activity.get_starting_nodes()
+    all_objects = activity.get_all_nodes()
     
     
+    '''
+    Do a forward pass and checks all the activities individually and connects 
+    them to their matching predecessors
+    '''
     for ind, st_nodes in enumerate(starting_nodes):
         for node in all_objects:
-            #pdb.set_trace()
-            if st_nodes[-1].id in node.pred:
-                starting_nodes[ind].append(deepcopy(node))
+            if st_nodes[-1].id in node.predecessor:
+                starting_nodes[ind].append(node)
+                
+                '''
+                If the length of a starting node is more than one check the second to the last activity
+                if it has other sucessors, if so then connect it to the matching predecessor
+                ''' 
+                   
+            elif len(st_nodes) > 1:    
+                if st_nodes[-2].id in node.predecessor:
+                    new_path = list()
+                    new_path.append(node)
+                    starting_nodes.append(new_path)
+                
     
-    for i in starting_nodes:
-        for a in i:
-            print(a.id, end=',')
-        print()
+    '''
+    do a backward pass and patch all the nodes/activities which have not been connected to their predecessor
+    from the previous calculation
+    '''
+    for ind, final_result in enumerate(starting_nodes):
+            while final_result[0].predecessor != ('0',):
+                for node in all_objects:
+                    if node.id in final_result[0].predecessor:
+                        starting_nodes[ind].insert(0, node)
+                          
+    
+    '''
+    for some reason duplicates are generated when calculating all the possible paths,
+    this block of code removes all duplicates in the nested list
+    '''
+    all_paths = list()
+    for path in starting_nodes:
+        if sorted(path) not in all_paths:
+            all_paths.append(sorted(path))
+    
+    '''if all_path is not empty then print all the possible paths in the project'''
+            
+    if None != all_paths:
+        print('The possible paths in the project are') 
+        for i in all_paths:
+            print( '==>'.join(str(a.id) for a in i))
+        
+        print('The critical path is {}'.format(max(all_paths, key=sum(all_paths.duration))))
     
         
     
