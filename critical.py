@@ -9,7 +9,6 @@ class criticalPath:
         self.duration = None
         self.est = None
         self.lst = None
-        #list to store all the objects
         self.all_objects = list()
         
     def __lt__(self, other):
@@ -21,20 +20,32 @@ class criticalPath:
         
     def get_properties(self):
         ''' 
-        This functions gets all the input from the user and stores the
+        This method gets all the input from the user and stores the
         activity name as a string, the predecessor as a tuple and the duration
         as an integer
         '''
-        
-        
-        object_list = list()
-        num_act = int(input('How many activities are in the project:\n'))
+        while True:
+            object_list = list()
+            num_act = input('How many activities are in the project:\n')
+            try:
+                num_act  = int(num_act)
+                break
+            except ValueError:
+                print('{} is not an integer please enter a valid number\n'.format(num_act))
         for i in range(num_act):
             name = input('what is the name of the activity {}:\n'.format(i+1))
             activity = criticalPath()
             predecessor = input('what is the predecessor(s) of the activity:\n')
             predecessor = tuple(predecessor.replace(',', ''))
-            duration = int(input('what is the duration of the activity:\n'))
+            while True:
+                try:
+                    duration = input('what is the duration of the activity:\n')
+                    duration = int(duration)
+                    break
+                except ValueError:
+                    print('{} is not an integer please enter a valid number\n'.format(duration))
+                    continue
+                
             
             '''sets the properties of the objects from what was gotten from the user'''
             activity.set_properties(name, predecessor, duration)
@@ -92,7 +103,7 @@ def main():
                 
                 '''
                 If the length of a starting node is more than one check the second to the last activity
-                if it has other sucessors, if so then connect it to the matching predecessor
+                if it has other successors, if so then connect it to the matching predecessor
                 ''' 
                    
             elif len(st_nodes) > 1:    
@@ -128,8 +139,15 @@ def main():
         print('The possible paths in the project are') 
         for i in all_paths:
             print( '==>'.join(str(a.id) for a in i))
+            
+        critical_path = ('==>'.join([path.id for path in max(all_paths, key=lambda ls: sum(obj.duration for obj in ls))]))
+        project_duration = ((max([sum([node.duration for node in object]) for object in all_paths])))
         
-        #print('The critical path is {}'.format(max(all_paths, key=sum(all_paths.duration))))
+        print('The critical path is {} and the project duration is {}'.format(critical_path, project_duration))
+        
+    else:
+        print('There was a problem calculating the critical path')
+        
     
         
     
