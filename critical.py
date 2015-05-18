@@ -231,21 +231,16 @@ def main():
 
 
 
-    '''All the calculation for the resource levelling class'''
+    '''All the calculations for the resource levelling class'''
 
     levelit = level()
     levelit.level_est(all_objects)
     all_objects = levelit.level_lst(all_objects)
 
-    for activity in all_objects:
-        print(activity.level,'\n')
-
     '''list comprehension to add all the values in the est and lst of the objects'''
     result = [[sum(j) for j in zip(*i, fillvalue=0)] for i in zip(*[activity.level for activity in all_objects], fillvalue=[0])]
-    print(result)
 
     total = [[sum(j)] for j in [i for i in result]]
-    print(total)
 
     [print('The resource levelled is {0:.1f} percent'.format(b/a * 100)) for a, b in zip(*total)]
 
