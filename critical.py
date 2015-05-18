@@ -1,3 +1,5 @@
+import sys
+from itertools import zip_longest as zip
 class criticalPath:
 
     def __init__(self):
@@ -9,7 +11,9 @@ class criticalPath:
         self.duration = None
         self.est = None
         self.lst = None
+        self.resource = None
         self.all_objects = list()
+        self.level = [[], []]
 
     def __lt__(self, other):
         return other.id > self.id
@@ -27,12 +31,16 @@ class criticalPath:
         '''
         while True:
             object_list = list()
-            num_act = input('How many activities are in the project:\n')
             try:
+                num_act = input('How many activities are in the project:\n')
                 num_act  = int(num_act)
                 break
             except ValueError:
                 print('{} is not an integer please enter a valid number\n'.format(num_act))
+                continue
+            except KeyboardInterrupt:
+                print('The user quit the application')
+                sys.exit()
         for i in range(num_act):
             name = input('what is the name of the activity {}:\n'.format(i+1))
             activity = criticalPath()
@@ -42,14 +50,27 @@ class criticalPath:
                 try:
                     duration = input('what is the duration of the activity:\n')
                     duration = int(duration)
+
+                    est = input('Enter the activity\'s earliest starting time:\n')
+                    est = int(est)
+
+                    lst = input('Enter the activity\'s latest starting time:\n')
+                    lst = int(lst)
+
+                    resource = input('What are the resources available:\n')
+                    resource = int(resource)
                     break
                 except ValueError:
                     print('{} is not an integer please enter a valid number\n'.format(duration))
                     continue
+                except KeyboardInterrupt:
+                    print('The user quit the application')
+                    sys.exit()
+
 
 
             '''sets the properties of the objects from what was gotten from the user'''
-            activity.set_properties(name, predecessor, duration)
+            activity.set_properties(name, predecessor, duration, est, lst, resource)
 
             object_list.append(activity)
 
@@ -59,10 +80,13 @@ class criticalPath:
 
         return object_list
 
-    def set_properties(self, name, predecessor, duration):
+    def set_properties(self, name, predecessor, duration, est, lst, resource):
         self.id = name
         self.predecessor = predecessor
         self.duration = duration
+        self.est = est
+        self.lst = lst
+        self.resource = resource
 
 
     def get_starting_nodes(self):
@@ -106,7 +130,7 @@ class criticalPath:
         return starting_nodes
 
 
-    def patch_branches(self, starting_nodes):
+    def patch_branches(self, starting_nodes, all_objects):
         '''
         do a backward pass and patch all the nodes/activities which have not been connected to their predecessor
         from the previous calculation
@@ -116,8 +140,6 @@ class criticalPath:
                     for node in all_objects:
                         if node.id in final_result[0].predecessor:
                             starting_nodes[ind].insert(0, node)
-
-        return starting_nodes
 
 
         '''
@@ -129,14 +151,53 @@ class criticalPath:
             if sorted(path) not in all_paths:
                 all_paths.append(sorted(path))
 
+        return all_paths
+
 
 '''class for resource levelling'''
 class level(criticalPath):
     def __init__(self):
         pass
 
-    def printit(self):
-        pass
+    def level_est(self, all_objects):
+        for activity in all_objects:
+            resource = activity.resource
+            est = activity.est
+            duration = activity.duration
+
+            if est == 0:
+                for count in range(duration):
+                    activity.level[0].append(resource)
+            else:
+                while True:
+                    if len(activity.level[0]) < est:
+                        activity.level[0].append(0)
+                    else:
+                        break
+                for count in range(duration):
+                    activity.level[0].append(resource)
+
+
+    def level_lst(self, all_objects):
+        for activity in all_objects:
+            resource = activity.resource
+            lst = activity.lst
+            duration = activity.duration
+
+            if lst == 0:
+                for count in range(duration):
+                    activity.level[1].append(resource)
+            else:
+                while True:
+                    if len(activity.level[1]) < lst-1:
+                        activity.level[1].append(0)
+                    else:
+                        break
+                for count in range(duration):
+                    activity.level[1].append(resource)
+
+        return all_objects
+
 
 
 
@@ -147,7 +208,7 @@ def main():
 
     '''get all the possible branches in the diagram'''
     starting_nodes = activity.get_branches(starting_nodes, all_objects)
-    all_paths = activity.patch_branches(starting_nodes)
+    all_paths = activity.patch_branches(starting_nodes, all_objects)
 
 
     '''if all_path is not empty then print all the possible paths in the project'''
@@ -164,6 +225,29 @@ def main():
 
     else:
         print('There was a problem calculating the critical path')
+
+
+
+
+
+
+
+
+    levelit = level()
+    levelit.level_est(all_objects)
+    all_objects = levelit.level_lst(all_objects)
+
+    for activity in all_objects:
+        print(activity.level,'\n')
+
+    '''list comprehension to add all the values in the est and lst of the objects'''
+    result = [[sum(j) for j in zip(*i, fillvalue=0)] for i in zip(*[activity.level for activity in all_objects], fillvalue=[0])]
+    print(result)
+
+    total = [[sum(j)] for j in [i for i in result]]
+    print(total)
+
+    [print('The resource levelled is {0:.1f} percent'.format(b/a * 100)) for a, b in zip(*total)]
 
 
 
