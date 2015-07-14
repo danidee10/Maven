@@ -1,2 +1,5 @@
 # Critical-path-finder
-This is an interactive console program written in the python programming language that gets all the possible paths in a project and then finds the critical path
+This is an program that finds all the possible paths in a projects and gets the critical path, it can also do the resource loading and levelling excercises if needed
+
+#Implementation
+python, pyside and grapviz
