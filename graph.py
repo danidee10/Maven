@@ -34,7 +34,6 @@ class draw_graph():
         for a in graph_path:
             a.append({})
             for b in a:
-
                 for act in all_activities:
                     if b[0] == act.id:
                         duration = act.duration
@@ -44,7 +43,6 @@ class draw_graph():
                     else:
                         if not a[1]:
                             a[1].update({'label': str(0)})
-
                 for c in critical_path:
                     if 'Start' in b:
                         if b[1] == c.id:
@@ -61,16 +59,6 @@ class draw_graph():
                             a[1].update({'color': 'red'})
                 break
 
-        '''print(graph_path)
-        for a in graph_path:
-            count = len(a)   #very silly code i wrote l8r on stackoverflow
-            for b in range(count):
-                for c in a:
-                    if isinstance(c, dict):
-                        if not c:
-                            a.remove(c)'''
-
-        print(graph_path)
         return graph_path
 
     def add_edges(self, graph, edges):
@@ -85,7 +73,7 @@ class draw_graph():
         '''*******************Drawing the graph of the activities with graphviz**************************'''
         graph = gv.Digraph(format='png')
         graph._head = 'strict digraph %s{'
-        graph.node_attr['shape'] = 'record'
+        graph.node_attr['shape'] = 'circle'
         graph.graph_attr['rankdir'] = 'LR'
         unlabelled_edges = self.generate_paths(all_paths)
         labelled_edges = self.label_graph(unlabelled_edges, critical_path, all_activities)
