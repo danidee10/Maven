@@ -57,6 +57,6 @@ class Ui_Level(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "MainWindow", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Resource Loading", None, QtGui.QApplication.UnicodeUTF8))
         self.lstLabel.setText(QtGui.QApplication.translate("MainWindow", "RESOURCE LOADING FOR THE EST", None, QtGui.QApplication.UnicodeUTF8))
         self.estLabel.setText(QtGui.QApplication.translate("MainWindow", "RESOURCE LOADING FOR THE LST", None, QtGui.QApplication.UnicodeUTF8))

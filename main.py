@@ -12,7 +12,7 @@ def main():
     if os.name == 'nt':
         # This is needed to display the app icon on the taskbar on Windows 7,8 and 10
         import ctypes
-        myappid = 'MavenIcon...version 1.0'
+        myappid = 'Maven....version 1.0'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
             
     pixmap = QtGui.QPixmap('img/splash.png')
@@ -21,9 +21,9 @@ def main():
     app.processEvents()
     time.sleep(3)
     activity = criticalPath()
+    splash.finish(activity)
     activity.get_num_act()
     activity.show()
-    splash.finish(activity)
     sys.exit(app.exec_())
 
 if __name__ == '__main__': main()
