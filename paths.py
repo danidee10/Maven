@@ -8,6 +8,21 @@ from level import *
 from graph import *
 
 
+class Activity:
+    """basic structure of an activity having an id, predecessor, duration and a resource"""
+
+    def __init__(self, id, predecessor, duration, resource):
+        self.id = id
+        self.predecessor = predecessor
+        self.duration = duration
+        self.resource = resource if resource is not None else None
+        self.est = None
+        self.lst = None
+        self.is_critical = 'No'
+        self.level = [[], []]
+
+
+
 class criticalPath(QtGui.QMainWindow):
 
     def __init__(self, parent=None):
@@ -26,16 +41,7 @@ class criticalPath(QtGui.QMainWindow):
         self.actionAbout.setObjectName("actionAbout")
         self.ui.menubar.addAction(self.actionAbout)
 
-        #Initialize all the variables we're going to use to calculate the critical path
-        self.id = None
-        self.predecessor = None #tuple to hold the predecessor of each activity
-        self.duration = None
-        self.est = None
-        self.lst = None
-        self.resource = None
-        self.is_critical = 'No'
-        self.all_objects = None #list to hold all the activities in the project
-        self.level = [[], []]
+        self.all_objects = [] #list to hold all the activities in the project
         self.success = 'No'
         self.progress = 'Yes'
 
@@ -86,11 +92,11 @@ class criticalPath(QtGui.QMainWindow):
             self.ui.tableWidget.removeRow(row - 1)
 
     def get_properties(self):
-        all_activities = list()
+        self.all_objects = []
         rowCount = self.ui.tableWidget.rowCount()
         for row in range(0, rowCount):
-            activity = criticalPath()
             name = self.ui.tableWidget.item(row, 0)
+
             if name is not None:
                 name = name.text()
                 if name == '':
@@ -150,56 +156,48 @@ class criticalPath(QtGui.QMainWindow):
                     self.handle_errors(message, details)
 
             '''set the properties based on what was gotten from the user'''
-            activity.set_properties(name, predecessor, duration, resource)
-            all_activities.append(activity)
+            activity = Activity(name, predecessor, duration, resource)
+            self.all_objects.append(activity)
 
-        return all_activities
-
-    def set_properties(self, name, predecessor, duration, resource):
-        self.id = name
-        self.predecessor = predecessor
-        self.duration = duration
-        if resource is not None: self.resource = resource
-
-    def get_starting_nodes(self, all_objects):
-        '''gets the starting nodes/activities and puts them individually into a nested list'''
+    def get_starting_nodes(self):
+        """gets the starting nodes/activities and puts them individually into a nested list"""
         starting_nodes = list()
-        for i in all_objects:
+        for i in self.all_objects:
             for a in i.predecessor:
                 if '0' in a:
                     starting_nodes.append(i)
 
         return starting_nodes
         
-    def connect(self, starting_nodes, all_objects, result):
+    def connect(self, starting_nodes, result):
+        """works by slowly building the result based on the starting_nodes passed to it from get_branches
+            at the end of the iteration it returns the result, it should be noted that the first result passed
+            to the function is a a nested form of the original starting node(s)"""
         
         node_found = False
         for count, st_nodes in enumerate(starting_nodes):
-            for node in all_objects:
+            for node in self.all_objects:
                 if st_nodes.id in node.predecessor:
-                	node_found = True
-                	if st_nodes.id != result[count][-1].id:
-                	    tmplist = result[count][:-1]
-	                    tmplist.append(node)
-	                    result.append(tmplist)
-	                else:
-	                	result[count].append(node)
+                    node_found = True
+                    if st_nodes.id != result[count][-1].id:
+                        tmplist = result[count][:-1]
+                        tmplist.append(node)
+                        result.append(tmplist)
+                    else:
+                        result[count].append(node)
 
-                            
-        return (node_found, result)
-              
+        return node_found, result
 
-    def get_branches(self, starting_nodes, all_objects):
+    def get_branches(self, starting_nodes):
+        """calls the connect method and uses the result to call the connect method over and over till no new node(s)
+           is/are found
+        """
+
         result = [starting_nodes[:]]
-        '''
-        Do a forward pass and checks all the activities individually and connects
-        them to their matching predecessors
-        '''
-        
-        
+
         while True:
         
-            returned_values = self.connect(starting_nodes, all_objects, result)
+            returned_values = self.connect(starting_nodes, result)
             node_found, result = returned_values
             
             if node_found == True:
@@ -211,15 +209,15 @@ class criticalPath(QtGui.QMainWindow):
           
         return result
 
-    def get_est(self, all_objects):
-        '''checks all the activities and calculates the earliest starting time by using the forward pass'''
-        for activity in all_objects:
+    def get_est(self):
+        # checks all the activities and calculates the earliest starting time by using the forward pass
+        for activity in self.all_objects:
 
             if '0' in activity.predecessor:
                 activity.est = 0
             else:
                 for pred in activity.predecessor:
-                    for next_activity in all_objects:
+                    for next_activity in self.all_objects:
                         try:
                             if pred == next_activity.id and activity.est is not None:
                                 value = next_activity.est + next_activity.duration
@@ -234,18 +232,16 @@ class criticalPath(QtGui.QMainWindow):
                                 self.handle_errors('Problem calculating the est', 'there was a problem calculating the est please check your predecessors column for non-existing predecessors also the network diagram might not look correct')
 
         print('Earliest starting time')
-        for act in all_objects:
+        for act in self.all_objects:
             print(act.id, act.est)
 
-    def get_lst(self, all_objects, project_duration):
-        '''
-        method to calculate the latest starting time by reversing the
-        list and doing a backward pass through all the activities
-        '''
-        all_objects.reverse()
-        for activity in all_objects:
+    def get_lst(self, project_duration):
+        # calculates the latest starting time by reversing the list and doing a backward pass through all the activities
+
+        self.all_objects.reverse()
+        for activity in self.all_objects:
             for succ in activity.predecessor:
-                for prev_activity in all_objects:
+                for prev_activity in self.all_objects:
                     if activity.lst is not None:
                         if succ == prev_activity.id and prev_activity.lst is not None:
                             value = activity.lst - prev_activity.duration
@@ -260,29 +256,23 @@ class criticalPath(QtGui.QMainWindow):
                         prev_activity.lst = round(prev_activity.lst, 1)
 
         print('Latest starting time')
-        all_objects.reverse()
-        for act in all_objects:
+        self.all_objects.reverse()
+        for act in self.all_objects:
             print(act.id, act.lst)
 
     def format_ests_and_lsts(self, all_objects):
+        # convert the est's and lst's to their corresponding string values because tableWigets can only display str's
         ests = [act.est for act in all_objects]
         lsts = [act.lst for act in all_objects]
 
-        try:
-            for count, est in enumerate(ests):
-                if est % 1 == 0.0:
-                    est = int(est)
-                newEST = QtGui.QTableWidgetItem(str(est))
-                self.ui.tableWidget.setItem(count, 5, newEST)
+        for count, (est, lst) in enumerate(zip(ests, lsts)):
+            if est % 1 == 0.0:
+                est_string = QtGui.QTableWidgetItem(str(int(est)))
+                self.ui.tableWidget.setItem(count, 5, est_string)
 
-            for count, lst in enumerate(lsts):
-                if lst % 1 == 0.0:
-                    lst = int(lst)
-                newLST = QtGui.QTableWidgetItem(str(lst))
-                self.ui.tableWidget.setItem(count, 6, newLST)
-        except TypeError:
-                self.handle_errors('Problem calculating the est', 'there was a problem calculating the est please check your predecessors column for non-existing predecessors')
-
+            if lst % 1 == 0.0:
+                lst_string = QtGui.QTableWidgetItem(str(int(lst)))
+                self.ui.tableWidget.setItem(count, 6, lst_string)
 
 
     def display_graph_and_labels(self, visual_path, project_duration):
@@ -306,13 +296,15 @@ class criticalPath(QtGui.QMainWindow):
         return nested_list
 
     def find_paths(self):
-        self.all_objects = self.get_properties()
-        if self.progress == 'Yes':
-            starting_nodes = self.get_starting_nodes(self.all_objects)
-            #get all the possible paths in the project
-            all_paths = self.get_branches(starting_nodes, self.all_objects)
 
-            #if all_path is not empty then print all the possible paths in the project
+        self.get_properties()  # self.all_objects = self.get_properties
+        if self.progress == 'Yes':
+            starting_nodes = self.get_starting_nodes()
+
+            # get all the possible paths in the project
+            all_paths = self.get_branches(starting_nodes)
+
+            # if all_path is not empty then print all the possible paths in the project
             if None != all_paths:
                 print('The possible paths in the project are')
                 for i in all_paths:
@@ -324,10 +316,10 @@ class criticalPath(QtGui.QMainWindow):
 
                 visual_path = 'The critical path is: {}'.format(visual_path)
 
-                #calculate the est
-                self.get_est(self.all_objects)
+                # calculate and set the est for each activity
+                self.get_est()
 
-                #for all activities in the critical path make the est equal to the lst of the activity
+                # for all activities in the critical path make the est equal to the lst of the activity
                 for activity in critical_path:
                     activity.is_critical = 'Yes'
 
@@ -335,10 +327,10 @@ class criticalPath(QtGui.QMainWindow):
                     if activity.is_critical == 'Yes':
                         activity.lst = activity.est
 
-                #calculate the lst
-                self.get_lst(self.all_objects, self.project_duration)
+                # calculate and set the lst for each activity
+                self.get_lst(self.project_duration)
 
-                #format the est and lst so it can be displayed to the user
+                # format the est and lst so it can be displayed to the user
                 self.format_ests_and_lsts(self.all_objects)
 
                 draw_g = draw_graph()

@@ -2,7 +2,7 @@ __author__ = 'danidee'
 import os
 import sys
 import time
-from paths import *
+from paths import criticalPath, QtGui
 
 
 
