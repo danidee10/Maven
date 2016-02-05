@@ -5,7 +5,7 @@ from ui.ui_level import *
 class level(QtGui.QMainWindow):
 
     def __init__(self, parent=None):
-        super(level, self).__init__(parent)
+        super().__init__(parent)
         self.level_ui = Ui_Level()
         self.level_ui.setupUi(self)
 

@@ -2,6 +2,7 @@ __author__ = 'danidee'
 
 import graphviz as gv
 
+
 class draw_graph():
     '''
     This class handles the generation of datatypes(lists) to enable graphviz
@@ -77,6 +78,7 @@ class draw_graph():
         graph.graph_attr['rankdir'] = 'LR'
         unlabelled_edges = self.generate_paths(all_paths)
         labelled_edges = self.label_graph(unlabelled_edges, critical_path, all_activities)
+        print(labelled_edges)
         graphviz_path = self.add_edges(graph, labelled_edges)
         graphviz_path.render('graphs/network_diagram')
 

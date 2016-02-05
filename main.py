@@ -1,9 +1,8 @@
-__author__ = 'danidee'
 import os
 import sys
+import ctypes
 import time
 from paths import criticalPath, QtGui
-
 
 
 def main():
@@ -11,7 +10,6 @@ def main():
     app.setWindowIcon(QtGui.QIcon('img/icon.png'))
     if os.name == 'nt':
         # This is needed to display the app icon on the taskbar on Windows 7,8 and 10
-        import ctypes
         myappid = 'Maven....version 1.0'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
             
