@@ -1,18 +1,19 @@
-__author__ = 'danidee'
-
 import graphviz as gv
+
+__author__ = 'danidee'
 
 
 class draw_graph():
-    '''
+    """
     This class handles the generation of datatypes(lists) to enable graphviz
     draw the graphs of the activities using activities on nodes
-    '''
+    """
+
     def __init__(self):
         pass
 
-    def generate_paths(self, unordered):
-
+    @staticmethod
+    def generate_paths(unordered):
         paths = list()
         for i in unordered:
             tmp_list = list()
@@ -31,7 +32,8 @@ class draw_graph():
         print(graph_path)
         return graph_path
 
-    def label_graph(self, graph_path, critical_path, all_activities):
+    @staticmethod
+    def label_graph(graph_path, critical_path, all_activities):
         for a in graph_path:
             a.append({})
             for b in a:
@@ -62,7 +64,8 @@ class draw_graph():
 
         return graph_path
 
-    def add_edges(self, graph, edges):
+    @staticmethod
+    def add_edges(graph, edges):
         for e in edges:
             if isinstance(e[0], list):
                 graph.edge(*e[0], **e[1])
@@ -71,7 +74,13 @@ class draw_graph():
         return graph
 
     def draw(self, all_activities, all_paths, critical_path):
-        '''*******************Drawing the graph of the activities with graphviz**************************'''
+        """
+        :param all_activities: all the activities involved
+        :param all_paths: all the possible paths in the project
+        :param critical_path: The critical path
+        :return: None
+        """
+
         graph = gv.Digraph(format='png')
         graph._head = 'strict digraph %s{'
         graph.node_attr['shape'] = 'circle'
@@ -82,4 +91,5 @@ class draw_graph():
         graphviz_path = self.add_edges(graph, labelled_edges)
         graphviz_path.render('graphs/network_diagram')
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()

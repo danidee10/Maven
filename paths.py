@@ -35,7 +35,7 @@ class criticalPath(QtGui.QMainWindow):
         self.ui.clearButton.clicked.connect(self.ui.tableWidget.clearContents)
         self.ui.addRowButton.clicked.connect(self.addRow)
         self.ui.delRowButton.clicked.connect(self.delRow)
-        self.ui.viewResourceButton.clicked.connect(self.display_rlevelling)
+        self.ui.viewResourceButton.clicked.connect(lambda: self.display_rlevelling(self.all_activities))
         self.actionHelp = QtGui.QAction('Help', self, statusTip="Help and Docs", triggered=self.help)
         self.actionHelp.setObjectName("actionHelp")
         self.ui.menubar.addAction(self.actionHelp)
@@ -43,7 +43,7 @@ class criticalPath(QtGui.QMainWindow):
         self.actionAbout.setObjectName("actionAbout")
         self.ui.menubar.addAction(self.actionAbout)
 
-        self.all_objects = [] #list to hold all the activities in the project
+        self.all_activities = None # created because self.display_rlevelling can't access all the activities
         self.success = 'No'
         self.progress = 'Yes'
 
@@ -68,7 +68,7 @@ class criticalPath(QtGui.QMainWindow):
         msgbox.exec()
         self.progress = 'No'
 
-    def get_num_act(self):
+    def get_number_of_activities(self):
         while True:
             num_act, ok = QtGui.QInputDialog.getInteger(self, 'Input activity number', 'How many activities are involved?:')
             if ok:
@@ -94,7 +94,8 @@ class criticalPath(QtGui.QMainWindow):
             self.ui.tableWidget.removeRow(row - 1)
 
     def get_properties(self):
-        self.all_objects = []
+        all_activities = []  # reset self.activities when calling the method
+
         rowCount = self.ui.tableWidget.rowCount()
         for row in range(0, rowCount):
             name = self.ui.tableWidget.item(row, 0)
@@ -159,26 +160,45 @@ class criticalPath(QtGui.QMainWindow):
 
             '''set the properties based on what was gotten from the user'''
             activity = Activity(name, predecessor, duration, resource)
-            self.all_objects.append(activity)
+            all_activities.append(activity)
 
-    def get_starting_nodes(self):
-        """gets the starting nodes/activities and puts them individually into list"""
+        return all_activities
+
+    def get_starting_nodes(self, all_activities):
+        """
+        :param all_activities: all activities in the project e.g
+                                +----------------+---------------+
+                                | Activity id    | Predecessor   |
+                                +----------------+---------------|
+                                | A              | -             |
+                                | B              | -             |
+                                | C              | A             |
+                                | D              | A             |
+                                | E              | B             |
+                                +----------------+---------------+
+
+        :return: activities with no predecessor = [A, B]
+        """
         starting_nodes = list()
-        for i in self.all_objects:
+        for i in all_activities:
             for a in i.predecessor:
                 if '0' in a:
                     starting_nodes.append(i)
 
         return starting_nodes
-        
-    def build_graph(self, starting_nodes, result):
-        """recursive function that works by connecting nodes to their predecessors
-            at the end of the it returns the result if no new node was found, it should be noted that the first result passed
-            to the function is a a nested form of the original starting node(s)"""
 
+    def build_graph(self, all_activities, starting_nodes, result):
+        """
+        Recursive function that finds all the possible paths in the project, by using the activity predecessors to
+        match parents to their child nodes
+        :param all_activities: all activities in the project
+        :param starting_nodes: activities without predecessors = [A, B]
+        :param result: nested form of starting nodes = [[A, B]]
+        :return: all the possible paths in the project
+        """
         node_found = False
         for count, st_nodes in enumerate(starting_nodes):
-            for node in self.all_objects:
+            for node in all_activities:
                 if st_nodes.id in node.predecessor:  # a node was found process it (add the node to it's predecessor)
                     node_found = True
                     if st_nodes.id != result[count][-1].id:
@@ -188,23 +208,27 @@ class criticalPath(QtGui.QMainWindow):
                     else:
                         result[count].append(node)
 
-        if node_found == True:
+        if node_found:
             starting_nodes = list()
             for i in result:
                 starting_nodes.append(i[-1])
-            return self.build_graph(starting_nodes, result)
+            return self.build_graph(all_activities, starting_nodes, result)
         else:
             return result
 
-    def get_est(self):
-        # checks all the activities and calculates the earliest starting time by using the forward pass
-        for activity in self.all_objects:
+    def get_est(self, all_activities):
+        """
+        caluclates the earliest starting time of all activities in the project (Forward)
+        :param all_activities: All activities in the project
+        :return: None
+        """
+        for activity in all_activities:
 
             if '0' in activity.predecessor:
                 activity.est = 0
             else:
                 for pred in activity.predecessor:
-                    for next_activity in self.all_objects:
+                    for next_activity in all_activities:
                         try:
                             if pred == next_activity.id and activity.est is not None:
                                 value = next_activity.est + next_activity.duration
@@ -219,16 +243,21 @@ class criticalPath(QtGui.QMainWindow):
                                 self.handle_errors('Problem calculating the est', 'there was a problem calculating the est please check your predecessors column for non-existing predecessors also the network diagram might not look correct')
 
         print('Earliest starting time')
-        for act in self.all_objects:
+        for act in all_activities:
             print(act.id, act.est)
 
-    def get_lst(self, project_duration):
-        # calculates the latest starting time by reversing the list and doing a backward pass through all the activities
+    def get_lst(self, all_activities, project_duration):
+        """
+        calculates the latest starting time by reversing the list and looping through it (Backward pass)
+        :param all_activities: All activities in the project
+        :param project_duration: Total duration of the project
+        :return: None
+        """
 
-        self.all_objects.reverse()
-        for activity in self.all_objects:
+        all_activities.reverse()
+        for activity in all_activities:
             for succ in activity.predecessor:
-                for prev_activity in self.all_objects:
+                for prev_activity in all_activities:
                     if activity.lst is not None:
                         if succ == prev_activity.id and prev_activity.lst is not None:
                             value = activity.lst - prev_activity.duration
@@ -243,14 +272,19 @@ class criticalPath(QtGui.QMainWindow):
                         prev_activity.lst = round(prev_activity.lst, 1)
 
         print('Latest starting time')
-        self.all_objects.reverse()
-        for act in self.all_objects:
+        all_activities.reverse()
+        for act in all_activities:
             print(act.id, act.lst)
 
-    def format_ests_and_lsts(self, all_objects):
-        # convert the est's and lst's to their corresponding string values because tableWigets can only display str's
-        ests = [act.est for act in all_objects]
-        lsts = [act.lst for act in all_objects]
+    def format_ests_and_lsts(self, all_activities):
+        """
+        Converts all the est's and lst's of all activities in the project to strings because QTableWidget can only
+        display strings
+        :param all_activities: All activities in the project
+        :return: None
+        """
+        ests = [act.est for act in all_activities]
+        lsts = [act.lst for act in all_activities]
 
         for count, (est, lst) in enumerate(zip(ests, lsts)):
             if est % 1 == 0.0:
@@ -261,7 +295,6 @@ class criticalPath(QtGui.QMainWindow):
                 lst_string = QtGui.QTableWidgetItem(str(int(lst)))
                 self.ui.tableWidget.setItem(count, 6, lst_string)
 
-
     def display_graph_and_labels(self, visual_path, project_duration):
         self.ui.scrollArea.setStyleSheet('background-color: #ffffff')
         self.ui.criticalPathLabel.setWordWrap(True)
@@ -270,7 +303,6 @@ class criticalPath(QtGui.QMainWindow):
         self.ui.networkDiagram.setPixmap(networkPixmap)
         self.ui.criticalPathLabel.setText(visual_path)
         self.ui.projectDurationLabel.setText('The total duration of the project is {}'.format(int(project_duration)))
-
 
     def format_est_and_lst(self, nested_list):
         for i in nested_list:
@@ -284,13 +316,13 @@ class criticalPath(QtGui.QMainWindow):
 
     def find_paths(self):
 
-        self.get_properties()  # self.all_objects = self.get_properties
+        all_activities = self.get_properties()  # gets all the activities and puts them into self.all_activities
         if self.progress == 'Yes':
-            starting_nodes = self.get_starting_nodes()
+            starting_nodes = self.get_starting_nodes(all_activities)
 
             # get all the possible paths in the project
             result = [starting_nodes[:]]
-            all_paths = self.build_graph(starting_nodes, result)
+            all_paths = self.build_graph(all_activities, starting_nodes, result)
 
             # if all_path is not empty then print all the possible paths in the project
             if None != all_paths:
@@ -305,7 +337,7 @@ class criticalPath(QtGui.QMainWindow):
                 visual_path = 'The critical path is: {}'.format(visual_path)
 
                 # calculate and set the est for each activity
-                self.get_est()
+                self.get_est(all_activities)
 
                 # for all activities in the critical path make the est equal to the lst of the activity
                 for activity in critical_path:
@@ -313,13 +345,13 @@ class criticalPath(QtGui.QMainWindow):
                     activity.lst = activity.est # est and lst are equal for activities on the critical path
 
                 # calculate and set the lst for each activity
-                self.get_lst(self.project_duration)
+                self.get_lst(all_activities, self.project_duration)
 
                 # format the est and lst so it can be displayed to the user
-                self.format_ests_and_lsts(self.all_objects)
+                self.format_ests_and_lsts(all_activities)
 
                 draw_g = draw_graph()
-                draw_g.draw(self.all_objects, all_paths, critical_path)
+                draw_g.draw(all_activities, all_paths, critical_path)
 
                 self.display_graph_and_labels(visual_path, self.project_duration)
             else:
@@ -332,17 +364,17 @@ class criticalPath(QtGui.QMainWindow):
 
             counter = 0
 
-            for act in self.all_objects:
+            for act in all_activities:
                 if act.resource is not None:
                     counter = counter + 1
 
-            if counter == len(self.all_objects):
+            if counter == len(all_activities):
                 self.resourcelevel = level()
-                self.resourcelevel.level_est(self.all_objects)
-                self.all_objects = self.resourcelevel.level_lst(self.all_objects)
+                self.resourcelevel.level_est(all_activities)
+                self.all_objects = self.resourcelevel.level_lst(all_activities)
 
                 # list comprehension to add all the values in the est and lst of the objects
-                self.result = [[sum(j) for j in zip_longest(*i, fillvalue=0)] for i in zip_longest(*[activity.level for activity in self.all_objects], fillvalue=[0])]
+                self.result = [[sum(j) for j in zip_longest(*i, fillvalue=0)] for i in zip_longest(*[activity.level for activity in all_activities], fillvalue=[0])]
                 self.result = self.format_est_and_lst(self.result)
 
                 for i in self.result:
@@ -362,14 +394,16 @@ class criticalPath(QtGui.QMainWindow):
                 self.ui.efficiencyTitle.setText('EFFICIENCY')
                 self.ui.efficiencyLabel.setText(efficiency)
                 self.success = 'Yes'
-            elif counter < len(self.all_objects) and counter != 0:
+                self.all_activities = all_activities[:] # create self.all_activities only when other calculations have been done
+            elif counter < len(all_activities) and counter != 0:
                 self.handle_errors('empty resource values', 'Make sure all the resource values are set before proceeding')
 
-    def display_rlevelling(self):
+    def display_rlevelling(self, all_activities):
         if self.success == 'Yes':
-            activity_level = [i.level for i in self.all_objects]
+            activity_level = [i.level for i in self.all_activities]
             for row, activity in enumerate(activity_level):
                 self.format_est_and_lst(activity)
-            self.resourcelevel.display_levelling_excercise(self.project_duration, self.all_objects, self.result, self.success, activity_level)
+            self.resourcelevel.display_levelling_exercise(self.project_duration, self.all_activities, self.result, self.success, activity_level)
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()

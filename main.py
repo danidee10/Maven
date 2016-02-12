@@ -20,7 +20,7 @@ def main():
     time.sleep(3)
     activity = criticalPath()
     splash.finish(activity)
-    activity.get_num_act()
+    activity.get_number_of_activities()
     activity.show()
     sys.exit(app.exec_())
 

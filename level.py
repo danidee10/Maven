@@ -9,7 +9,8 @@ class level(QtGui.QMainWindow):
         self.level_ui = Ui_Level()
         self.level_ui.setupUi(self)
 
-    def level_est(self, all_objects):
+    @staticmethod
+    def level_est(all_objects):
         for activity in all_objects:
             resource = activity.resource
             est = activity.est
@@ -25,7 +26,8 @@ class level(QtGui.QMainWindow):
                 for count in range(int(duration)):
                     activity.level[0].append(resource)
 
-    def level_lst(self, all_objects):
+    @staticmethod
+    def level_lst(all_objects):
         for activity in all_objects:
             resource = activity.resource
             est = activity.est
@@ -45,15 +47,15 @@ class level(QtGui.QMainWindow):
 
         return all_objects
 
-
-    def format_est_and_lst(self, nested_list):
+    @staticmethod
+    def format_est_and_lst(nested_list):
         for i in nested_list:
             for count, j in enumerate(i):
                 if j % 1 == 0.0:
                     i[count] = int(j)
         return nested_list
 
-    def display_levelling_excercise(self, project_duration, all_objects, result, success, activity_level):
+    def display_levelling_exercise(self, project_duration, all_objects, result, success, activity_level):
         if success == 'Yes':
             self.level_ui.estTable.setColumnCount(project_duration)
             self.level_ui.estTable.setRowCount(len(all_objects) + 1)
@@ -97,7 +99,7 @@ class level(QtGui.QMainWindow):
 
 
 
-            '''*****************For the LST Resource loading excercise****************'''
+            '''*****************For the LST Resource loading exercise****************'''
 
             for row, activity in enumerate(activity_level):
                 while len(activity[1]) < project_duration:
