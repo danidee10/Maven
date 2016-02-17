@@ -1,5 +1,5 @@
 import unittest
-from paths import Activity, criticalPath
+from paths import Activity, CriticalPath
 
 
 A = Activity('A', ('0',), 2, 3)

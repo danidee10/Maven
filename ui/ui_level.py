@@ -1,5 +1,6 @@
 from PySide import QtCore, QtGui
 
+
 class Ui_Level(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")

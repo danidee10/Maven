@@ -2,7 +2,7 @@ import os
 import sys
 import ctypes
 import time
-from paths import criticalPath, QtGui
+from paths import CriticalPath, QtGui
 
 
 def main():
@@ -18,10 +18,10 @@ def main():
     splash.show()
     app.processEvents()
     time.sleep(3)
-    activity = criticalPath()
-    splash.finish(activity)
-    activity.get_number_of_activities()
-    activity.show()
+    critical_path = CriticalPath()
+    splash.finish(critical_path)
+    critical_path.initialize_table()  # application starts from here by asking the user for the number of activities
+    critical_path.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__': main()
