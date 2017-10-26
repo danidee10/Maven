@@ -1,4 +1,4 @@
-from PySide import QtCore, QtGui
+from PyQt4 import QtCore, QtGui
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
