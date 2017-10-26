@@ -3,7 +3,12 @@ Maven
 
 A small project management application that implements the critical path method to get the critical path in a set
 of activities in a project, It also calculates the Earliest Starting Time and Latest Starting time of each activity,
-Maven can also carry out the Resource Loading Excercise, directed graphs are automatically generated with Graphviz
+Maven can also carry out the Resource Loading Excercise, directed graphs are automatically generated with Graphviz.
+
+What can it do
+-------------------
+To be honest the UI is Shit, but this is a glimpse of what graphiz can do
+![Screenshot](img/Screenshot.png)
 
 
 Implementation
