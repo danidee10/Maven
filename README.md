@@ -7,7 +7,7 @@ Maven can also carry out the Resource Loading Excercise, directed graphs are aut
 
 What can it do
 -------------------
-To be honest the UI is Shit, but this is a glimpse of what graphiz can do
+To be honest the UI isn't that great, but this is a glimpse of what Maven can do.
 ![Screenshot](img/Screenshot.png)
 
 
@@ -15,7 +15,7 @@ Implementation
 --------------------
 
 - Python3.4 to 3.6
-- <s>PySide</s> PyQt4 (Unfortunately PySide development Stalled) Though it still works
+- <s>PySide</s> PyQt4 (Unfortunately PySide development Stalled) Though it still works (If you change the imports to `PySide`)
 - Graphviz (dot-language)
 - graphviz (a python3 module for working with Graphviz)
 
@@ -25,7 +25,7 @@ Install PyQt4
 There are Several Ways to install PyQt based on your OS and Distribution (If you're using Linux)
 
 Install Graphviz (the dot language)
-Also there are Various ways to Install this
+Also there are Various ways to Install this depending on your OS
 
 Install Graphviz (From Pypi)
 This is the only platform independent component, it can easily be installed from pip with
